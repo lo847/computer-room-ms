@@ -343,8 +343,12 @@ app.get('*', function (req, res) {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-var server = app.listen(PORT, function () {
-  console.log('CRMS running: http://localhost:' + PORT);
-  console.log('Admin: admin / admin123');
-});
-server.on('error', function (err) { console.error('FAIL:', err.message); process.exit(1); });
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  var server = app.listen(PORT, function () {
+    console.log('CRMS running: http://localhost:' + PORT);
+    console.log('Admin: admin / admin123');
+  });
+  server.on('error', function (err) { console.error('FAIL:', err.message); process.exit(1); });
+}
