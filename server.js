@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3456;
-const DATA_FILE = path.join(__dirname, 'data.json');
+const DATA_FILE = process.env.VERCEL ? '/tmp/data.json' : path.join(__dirname, 'data.json');
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const JWT_EXPIRES = '24h';
 
@@ -31,7 +31,7 @@ function writeData(data) { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null
   }
 })();
 
-var uploadsDir = path.join(__dirname, 'public', 'uploads');
+var uploadsDir = process.env.VERCEL ? '/tmp/uploads' : path.join(__dirname, 'public', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 var storage = multer.diskStorage({
@@ -50,7 +50,12 @@ var upload = multer({
 });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+var publicDir = path.join(__dirname, 'public');
+app.use(express.static(publicDir));
+// Serve Vercel uploads
+if (process.env.VERCEL) {
+  app.use('/uploads', express.static('/tmp/uploads'));
+}
 
 function authMiddleware(req, res, next) {
   var header = req.headers.authorization;
@@ -340,7 +345,8 @@ app.delete('/api/posts/:id/comments/:cid', authMiddleware, function (req, res) {
 // SPA fallback
 app.get('*', function (req, res) {
   if (req.path.indexOf('/api/') === 0) return res.status(404).json({ error: '接口不存在' });
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  var idxPath = path.join(__dirname, 'public', 'index.html');
+  res.sendFile(idxPath);
 });
 
 if (process.env.VERCEL) {
