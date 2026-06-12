@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jifang
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jifang
+  template:
+    metadata:
+      labels:
+        app: jifang
+    spec:
+      containers:
+        - name: jifang
+          image: 111111j/jifang:latest
+          ports:
+            - containerPort: 3456
+          env:
+            - name: JWT_SECRET
+              value: "7708a996bf0a77fff2505d3b4cf41e73ffd5730df65e53622f43c9c59392ef90"
+            - name: DATA_DIR
+              value: "/app/data"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: jifang-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jifang-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jifang-svc
+spec:
+  selector:
+    app: jifang
+  ports:
+    - port: 3456
+      targetPort: 3456

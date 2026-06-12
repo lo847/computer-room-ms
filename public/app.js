@@ -103,7 +103,14 @@
     var year = new Date().getFullYear();
     var opts = '';
     for (var y = year; y >= year - 30; y--) opts += '<option value="' + y + '">' + y + ' 届</option>';
-    main.innerHTML = '<div class="auth-page"><div class="auth-card"><h1>注册账号</h1><p class="subtitle">填写信息创建新账号</p><div class="form-row"><div class="form-group"><label>学号 *</label><input type="text" id="regSid" placeholder="请输入学号" maxlength="20"></div><div class="form-group"><label>姓名 *</label><input type="text" id="regName" placeholder="请输入姓名" maxlength="50"></div></div><div class="form-row"><div class="form-group"><label>密码 *</label><input type="password" id="regPw" placeholder="至少6位"></div><div class="form-group"><label>确认密码 *</label><input type="password" id="regPw2" placeholder="再次输入密码"></div></div><div class="form-group"><label>毕业届数 *</label><select id="regYear"><option value="">选择届别</option>' + opts + '</select></div><div class="form-group"><label>家庭地址</label><input type="text" id="regAddr" placeholder="选填" maxlength="200"></div><div class="form-group"><label>当前职业/状态</label><input type="text" id="regOcc" placeholder="选填，如：学生、工程师..." maxlength="100"></div><div id="regMsg" class="form-msg"></div><button class="btn btn-primary" id="regBtn">注 册</button><p class="auth-link">已有账号？<a id="toLogin">返回登录</a></p></div></div>';
+    opts += '<option value="__custom__">自定义届别...</option>';
+    main.innerHTML = '<div class="auth-page"><div class="auth-card"><h1>注册账号</h1><p class="subtitle">填写信息创建新账号</p><div class="form-row"><div class="form-group"><label>学号 *</label><input type="text" id="regSid" placeholder="请输入学号" maxlength="20"></div><div class="form-group"><label>姓名 *</label><input type="text" id="regName" placeholder="请输入姓名" maxlength="50"></div></div><div class="form-row"><div class="form-group"><label>密码 *</label><input type="password" id="regPw" placeholder="至少6位"></div><div class="form-group"><label>确认密码 *</label><input type="password" id="regPw2" placeholder="再次输入密码"></div></div><div class="form-group"><label>毕业届数 *</label><select id="regYear"><option value="">选择届别</option>' + opts + '</select><input type="text" id="regYearCustom" placeholder="输入自定义届别" maxlength="20" style="display:none;margin-top:8px"></div><div class="form-row"><div class="form-group"><label>手机号</label><input type="tel" id="regPhone" placeholder="选填" maxlength="20"></div><div class="form-group"><label>邮箱</label><input type="email" id="regEmail" placeholder="选填" maxlength="100"></div></div><div class="form-group"><label>家庭地址</label><input type="text" id="regAddr" placeholder="选填" maxlength="200"></div><div class="form-group"><label>当前职业/状态</label><input type="text" id="regOcc" placeholder="选填，如：学生、工程师..." maxlength="100"></div><div id="regMsg" class="form-msg"></div><button class="btn btn-primary" id="regBtn">注 册</button><p class="auth-link">已有账号？<a id="toLogin">返回登录</a></p></div></div>';
+    var selYear2 = document.getElementById('regYear');
+    var custInput = document.getElementById('regYearCustom');
+    selYear2.addEventListener('change', function () {
+      if (selYear2.value === '__custom__') { custInput.style.display = ''; custInput.focus(); }
+      else { custInput.style.display = 'none'; custInput.value = ''; }
+    });
     document.getElementById('regBtn').addEventListener('click', doRegister);
     document.getElementById('toLogin').addEventListener('click', function () { navigate('login'); });
   }
@@ -113,7 +120,8 @@
     var name = document.getElementById('regName').value.trim();
     var pw = document.getElementById('regPw').value;
     var pw2 = document.getElementById('regPw2').value;
-    var year = document.getElementById('regYear').value;
+    var selYearReg = document.getElementById('regYear');
+    var year = selYearReg.value === '__custom__' ? document.getElementById('regYearCustom').value.trim() : selYearReg.value;
     var msg = document.getElementById('regMsg');
     if (!sid || !name || !pw || !year) { msg.textContent = '请填写所有必填项'; msg.className = 'form-msg error'; return; }
     if (pw.length < 6) { msg.textContent = '密码长度不能少于6位'; msg.className = 'form-msg error'; return; }
@@ -121,7 +129,7 @@
     var btn = document.getElementById('regBtn');
     btn.disabled = true; btn.textContent = '注册中...'; msg.textContent = '';
     try {
-      var res = await api('/auth/register', { method: 'POST', body: { student_id: sid, name: name, password: pw, confirm_password: pw2, graduate_year: year, address: document.getElementById('regAddr').value.trim(), occupation: document.getElementById('regOcc').value.trim() } });
+      var res = await api('/auth/register', { method: 'POST', body: { student_id: sid, name: name, password: pw, confirm_password: pw2, graduate_year: year, phone: document.getElementById('regPhone').value.trim(), email: document.getElementById('regEmail').value.trim(), address: document.getElementById('regAddr').value.trim(), occupation: document.getElementById('regOcc').value.trim() } });
       setToken(res.token); currentUser = res.user; showToast('注册成功', 'success'); navigate('dashboard');
     } catch (err) { msg.textContent = err.message; msg.className = 'form-msg error'; }
     finally { btn.disabled = false; btn.textContent = '注 册'; }
@@ -133,15 +141,23 @@
   }
 
   async function renderDashboard() {
-    main.innerHTML = '<div class="page-header"><h2>成员信息</h2><span class="count-badge" id="dashCount">0</span></div><div class="toolbar"><div class="search-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="dashSearch" placeholder="搜索姓名或学号..."></div><select id="dashYear"><option value="">全部届别</option></select></div><div class="card-grid" id="dashCards"></div>';
+    main.innerHTML = '<div class="page-header"><h2>成员信息</h2><span class="count-badge" id="dashCount">0</span></div><div class="toolbar"><div class="search-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" id="dashSearch" placeholder="搜索姓名或学号..."></div><select id="dashYear"><option value="">全部届别</option><option value="__custom__">自定义届别...</option></select><input type="text" id="dashYearCustom" placeholder="输入自定义届别" maxlength="20" style="display:none;margin-left:8px;width:160px;padding:8px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;outline:none"></div><div class="card-grid" id="dashCards"></div>';
     loadDashboard();
     document.getElementById('dashSearch').addEventListener('input', debounce(loadDashboard, 300));
-    document.getElementById('dashYear').addEventListener('change', loadDashboard);
+    var dashYearSel = document.getElementById("dashYear");
+    var dashYearCust = document.getElementById("dashYearCustom");
+    dashYearSel.addEventListener("change", function () {
+      if (dashYearSel.value === "__custom__") { dashYearCust.style.display = ""; dashYearCust.focus(); }
+      else { dashYearCust.style.display = "none"; dashYearCust.value = ""; }
+      loadDashboard();
+    });
+    dashYearCust.addEventListener("input", debounce(loadDashboard, 300));
   }
 
   async function loadDashboard() {
     var search = document.getElementById('dashSearch') ? document.getElementById('dashSearch').value : '';
-    var year = document.getElementById('dashYear') ? document.getElementById('dashYear').value : '';
+    var dashYearSel2 = document.getElementById('dashYear');
+    var year = dashYearSel2 ? (dashYearSel2.value === '__custom__' ? document.getElementById('dashYearCustom').value.trim() : dashYearSel2.value) : '';
     try {
       var data = await api('/users?search=' + encodeURIComponent(search) + '&graduate_year=' + encodeURIComponent(year) + '&pageSize=200');
       document.getElementById('dashCount').textContent = data.total;
@@ -159,7 +175,7 @@
       try {
         var years = await api('/years');
         var sel = document.getElementById('dashYear');
-        if (sel && sel.options.length <= 1) {
+        if (sel && sel.options.length <= 2) {
           years.forEach(function (y) { var o = document.createElement('option'); o.value = y; o.textContent = y + ' 届'; sel.appendChild(o); });
         }
       } catch (_) {}

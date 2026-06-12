@@ -8,7 +8,8 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3456;
-const DATA_FILE = path.join(__dirname, 'data.json');
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const DATA_FILE = path.join(DATA_DIR, 'data.json');
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const JWT_EXPIRES = '24h';
 
@@ -31,7 +32,7 @@ function writeData(data) { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null
   }
 })();
 
-var uploadsDir = path.join(__dirname, 'public', 'uploads');
+var uploadsDir = path.join(DATA_DIR, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 var storage = multer.diskStorage({
@@ -51,6 +52,7 @@ var upload = multer({
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(DATA_DIR, 'uploads')));
 
 function authMiddleware(req, res, next) {
   var header = req.headers.authorization;
