@@ -1,0 +1,6 @@
+﻿node_modules/
+data.json
+public/uploads/
+.idea/
+*.log
+.DS_Store

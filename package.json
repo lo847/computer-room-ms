@@ -1,0 +1,16 @@
+﻿{
+  "name": "computer-room-ms",
+  "version": "2.0.0",
+  "description": "机房人员信息管理系统",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
