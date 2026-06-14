@@ -194,6 +194,8 @@
       '<div class="form-row"><div class="form-group"><label>姓名</label><input type="text" id="profName" value="' + escapeHtml(currentUser.name) + '"></div><div class="form-group"><label>学号</label><input type="text" value="' + escapeHtml(currentUser.student_id) + '" disabled></div></div>' +
       '<div class="form-row"><div class="form-group"><label>手机号</label><input type="text" id="profPhone" value="' + escapeHtml(currentUser.phone) + '"></div><div class="form-group"><label>邮箱</label><input type="text" id="profEmail" value="' + escapeHtml(currentUser.email) + '"></div></div>' +
       '<div class="form-group"><label>毕业届数</label><input type="text" id="profYear" value="' + escapeHtml(gy) + '"></div>' +
+      '<div class="form-row"><div class="form-group"><label>性别</label><select id="profGender"><option value="">保密</option><option value="男"' + (currentUser.gender === '男' ? ' selected' : '') + '>男</option><option value="女"' + (currentUser.gender === '女' ? ' selected' : '') + '>女</option></select></div><div class="form-group"><label>当前职业/状态</label><input type="text" id="profOcc" value="' + escapeHtml(currentUser.occupation || '') + '" placeholder="选填" maxlength="100"></div></div>' +
+      '<div class="form-group"><label>家庭地址</label><input type="text" id="profAddr" value="' + escapeHtml(currentUser.address || '') + '" placeholder="选填" maxlength="200"></div>' +
       '<button class="btn btn-primary" id="profSave" style="width:auto">保存修改</button>' +
       '<div class="profile-password-section"><h3>修改密码</h3><div id="pwMsg" class="form-msg"></div>' +
       '<div class="form-group"><label>原密码</label><input type="password" id="pwOld"></div>' +
@@ -215,9 +217,10 @@
       var phone = document.getElementById('profPhone').value.trim();
       var email = document.getElementById('profEmail').value.trim();
       var year = document.getElementById('profYear').value.trim();
+      var gender = document.getElementById('profGender').value;
       var msg = document.getElementById('profMsg');
       try {
-        var user = await api('/auth/me', { method: 'PUT', body: { name: name, phone: phone, email: email, graduate_year: year, address: document.getElementById('profAddr').value.trim(), occupation: document.getElementById('profOcc').value.trim() } });
+        var user = await api('/auth/me', { method: 'PUT', body: { name: name, phone: phone, email: email, graduate_year: year, gender: gender, address: document.getElementById('profAddr').value.trim(), occupation: document.getElementById('profOcc').value.trim() } });
         currentUser = user; msg.textContent = '保存成功'; msg.className = 'form-msg success';
         setTimeout(function () { msg.textContent = ''; }, 2000);
       } catch (err) { msg.textContent = err.message; msg.className = 'form-msg error'; }
